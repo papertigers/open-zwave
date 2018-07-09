@@ -17,6 +17,9 @@ DEBUG_LDFLAGS	:= -g
 
 top_srcdir := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../../../)
 
+# Used to detect SmartOS (variable will be "joyent")
+UNAME_V := $(shell uname -v 2>/dev/null | sed -e 's/_.*//')
+
 #where is put the temporary library
 LIBDIR  	?= $(top_builddir)
 
@@ -55,6 +58,8 @@ endif
 
 else ifeq ($(UNAME),NetBSD)
 LDFLAGS+= -L/usr/pkg/lib -lusb-1.0
+else ifeq ($(UNAME_V),joyent)
+LDFLAGS += -L/opt/local/lib -R/opt/local/lib -lusb-1.0
 endif
 
 $(OBJDIR)/MinOZW:	$(patsubst %.cpp,$(OBJDIR)/%.o,$(minozwsrc))

@@ -23,6 +23,9 @@ top_srcdir := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../../)
 
 include $(top_srcdir)/cpp/build/support.mk
 
+# Used to detect SmartOS (variable will be "joyent")
+UNAME_V := $(shell uname -v 2>/dev/null | sed -e 's/_.*//')
+
 #Mac prefers a dylib, not a so
 ifeq ($(UNAME),Darwin)
 SHARED_LIB_NAME=libopenzwave-$(VERSION).dylib
@@ -60,6 +63,9 @@ endif
 else ifeq ($(UNAME),NetBSD)
 CFLAGS += -I/usr/pkg/include/libusb-1.0
 LDFLAGS+= -shared -L/usr/pkg/lib -lusb-1.0 -Wl,-rpath=/usr/pkg/lib
+else ifeq ($(UNAME_V),joyent)
+CFLAGS+=  -I/opt/local/include/libusb-1.0
+LDFLAGS+= -shared -L/opt/local/lib -lusb-1.0 -Wl,-rpath=/opt/local/lib -liconv
 else
 LDFLAGS += -shared -Wl,-soname,$(SHARED_LIB_NAME)
 LIBS 	+= -ludev
@@ -76,6 +82,8 @@ SOURCES_HIDAPI =$(top_srcdir)/cpp/hidapi/mac
 else ifeq ($(UNAME),FreeBSD)
 SOURCES_HIDAPI =$(top_srcdir)/cpp/hidapi/libusb
 else ifeq ($(UNAME),NetBSD)
+SOURCES_HIDAPI =$(top_srcdir)/cpp/hidapi/libusb
+else ifeq ($(UNAME_V),joyent)
 SOURCES_HIDAPI =$(top_srcdir)/cpp/hidapi/libusb
 else
 SOURCES_HIDAPI =$(top_srcdir)/cpp/hidapi/linux
@@ -94,6 +102,8 @@ hidapi := $(notdir $(wildcard $(top_srcdir)/cpp/hidapi/mac/*.c))
 else ifeq ($(UNAME),FreeBSD)
 hidapi := $(notdir $(wildcard $(top_srcdir)/cpp/hidapi/libusb/*.c))
 else ifeq ($(UNAME),NetBSD)
+hidapi := $(notdir $(wildcard $(top_srcdir)/cpp/hidapi/libusb/*.c))
+else ifeq ($(UNAME_V),joyent)
 hidapi := $(notdir $(wildcard $(top_srcdir)/cpp/hidapi/libusb/*.c))
 else
 hidapi := $(notdir $(wildcard $(top_srcdir)/cpp/hidapi/linux/*.c)) # we do not want the libusb version
